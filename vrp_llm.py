@@ -1,65 +1,68 @@
 """
-Integração com LLM (Groq API) para o VRP -- Tech Challenge Fase 2.
+Integração com LLM (Google Gemini API) para o VRP -- Tech Challenge Fase 2.
 
 Cobre os 3 requisitos do enunciado (item 3 -- Integração com LLMs):
 1. Gerar instruções detalhadas para motoristas/equipes de entrega
 2. Gerar relatórios de eficiência das rotas
 3. Responder perguntas em linguagem natural sobre rotas e entregas
 
-Provedor: Groq (free tier, sem cartão de crédito, modelos open-source como
-LLaMA rodando em hardware LPU especializado -- inferência muito rápida).
-Modelo usado: llama-3.3-70b-versatile.
+Provedor: Google Gemini API (via Google AI Studio) -- free tier permanente,
+sem cartão de crédito, sem prazo de expiração, apenas conta Google. Trocado
+a partir de tentativas anteriores com Claude (Anthropic, requer crédito
+pago após o trial inicial) e Groq (problema de login no momento do
+desenvolvimento).
+Modelo usado: gemini-3.6-flash (elegível para a free tier).
 
-IMPORTANTE: este arquivo precisa da variável de ambiente GROQ_API_KEY
+IMPORTANTE: este arquivo precisa da variável de ambiente GEMINI_API_KEY
 configurada para funcionar. Sem ela, roda em modo "dry-run" (mostra os
 prompts que seriam enviados, sem chamar a API de verdade) -- útil para
-revisar o texto dos prompts antes de gastar cota da conta.
+revisar o texto dos prompts antes de fazer chamadas reais.
 
 Para configurar a chave (no terminal, antes de rodar o script):
-    export GROQ_API_KEY="sua-chave-aqui"        # Mac/Linux
-    set GROQ_API_KEY=sua-chave-aqui              # Windows (cmd)
-    $env:GROQ_API_KEY="sua-chave-aqui"            # Windows (PowerShell)
+    export GEMINI_API_KEY="sua-chave-aqui"        # Mac/Linux
+    set GEMINI_API_KEY=sua-chave-aqui              # Windows (cmd)
+    $env:GEMINI_API_KEY="sua-chave-aqui"            # Windows (PowerShell)
 
-Chave gratuita disponível em: https://console.groq.com (sem cartão de crédito)
+Chave gratuita disponível em: https://aistudio.google.com/apikey (basta uma
+conta Google, sem cartão de crédito)
 """
 
 import os
 from typing import List, Tuple, Dict
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "gemini-3.6-flash"
 
 
 def get_client():
     """
-    Cria o client da Groq. Retorna None se a biblioteca ou a chave de
+    Cria o client do Gemini. Retorna None se a biblioteca ou a chave de
     API não estiverem disponíveis -- nesse caso, o script roda em modo
     dry-run (mostra os prompts sem enviar).
     """
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return None
     try:
-        from groq import Groq
-        return Groq(api_key=api_key)
+        from google import genai
+        return genai.Client(api_key=api_key)
     except ImportError:
         return None
 
 
 def call_llm(client, prompt: str, max_tokens: int = 1024) -> str:
     """
-    Envia um prompt para o Groq e retorna o texto da resposta.
+    Envia um prompt para o Gemini e retorna o texto da resposta.
     Se o client for None (modo dry-run), apenas devolve o prompt formatado
     para revisão, sem chamar a API.
     """
     if client is None:
         return f"[DRY-RUN -- prompt que seria enviado à API]\n\n{prompt}"
 
-    chat_completion = client.chat.completions.create(
+    response = client.models.generate_content(
         model=MODEL,
-        max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
+        contents=prompt,
     )
-    return chat_completion.choices[0].message.content
+    return response.text
 
 
 def format_route_for_prompt(route: List[Tuple[float, float]], priorities: Dict[Tuple[float, float], str], demands: Dict[Tuple[float, float], int], vehicle_number: int) -> str:
@@ -194,9 +197,9 @@ if __name__ == '__main__':
     client = get_client()
     if client is None:
         print("=" * 70)
-        print("MODO DRY-RUN: variável GROQ_API_KEY não encontrada.")
+        print("MODO DRY-RUN: variável GEMINI_API_KEY não encontrada.")
         print("Os prompts abaixo seriam enviados à API, mas não estão sendo enviados.")
-        print("Configure a chave (gratuita em console.groq.com) para testar com respostas reais.")
+        print("Configure a chave (gratuita em aistudio.google.com/apikey) para testar com respostas reais.")
         print("=" * 70)
         print()
 
