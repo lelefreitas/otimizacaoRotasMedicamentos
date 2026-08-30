@@ -38,6 +38,7 @@ from vrp_llm import (
     generate_efficiency_report,
     answer_question_about_routes,
 )
+from vrp_visualization import plot_routes
 
 
 def run_genetic_algorithm(
@@ -152,6 +153,16 @@ if __name__ == '__main__':
         demand = sum(demands[c] for c in route)
         criticas = sum(1 for c in route if priorities[c] == "critico")
         print(f"  Veículo {i+1}: {len(route)} paradas | distância = {dist:.2f} | demanda = {demand} | críticas = {criticas}")
+
+    print("\n" + "=" * 70)
+    print("Gerando mapa das rotas otimizadas")
+    print("=" * 70)
+    plot_routes(
+        final_routes, priorities, demands,
+        title="Rotas Otimizadas -- Entrega de Medicamentos e Insumos",
+        save_path="rotas_otimizadas.png",
+        show=False,  # mude para True se quiser abrir a janela do gráfico automaticamente
+    )
 
     print("\n" + "=" * 70)
     print("ETAPA 2: Gerando instruções para motoristas via LLM (Gemini)")
