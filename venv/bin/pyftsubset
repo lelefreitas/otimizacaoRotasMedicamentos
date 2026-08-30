@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/home/leticia/Documentos/Estudo/Pós /Etapas/Fase 2/otimizacaoRotasMedicamentos/venv/bin/python3" "$0" "$@"
+'''exec' "/home/leticia/Documentos/Estudo/Pós /Etapas/Fase 2/otimizacaoRotasMedicamentos/venv_novo/bin/python" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
