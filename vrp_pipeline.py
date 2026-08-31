@@ -57,11 +57,17 @@ def run_genetic_algorithm(
     priority_seed: int,
     critico_ratio: float,
     rng_seed: int,
+    verbose: bool = True,
+    track_history: bool = False,
 ):
     """
     Roda o GA completo e retorna a melhor solução final, junto com os
     dados auxiliares (demandas, prioridades) necessários para o LLM
     interpretar essa solução depois.
+
+    Se track_history=True, também retorna a lista com o melhor fitness de
+    cada geração (usado para comparar velocidade de convergência entre
+    diferentes configurações do GA).
     """
     rng = random.Random(rng_seed)
 
@@ -73,6 +79,7 @@ def run_genetic_algorithm(
 
     best_solution = None
     best_fitness = None
+    fitness_history = []
 
     for generation in range(n_generations):
         population_fitness = [
@@ -88,7 +95,10 @@ def run_genetic_algorithm(
         best_fitness = population_fitness[0]
         best_solution = population[0]
 
-        if generation % 20 == 0 or generation == n_generations - 1:
+        if track_history:
+            fitness_history.append(best_fitness)
+
+        if verbose and (generation % 20 == 0 or generation == n_generations - 1):
             chromosome, splits = best_solution
             routes = split_into_routes_variable(chromosome, splits)
             avg_pos = average_critical_position(routes, priorities)
@@ -109,6 +119,8 @@ def run_genetic_algorithm(
 
         population = new_population
 
+    if track_history:
+        return best_solution, best_fitness, demands, priorities, fitness_history
     return best_solution, best_fitness, demands, priorities
 
 
